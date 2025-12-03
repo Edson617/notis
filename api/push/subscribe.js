@@ -1,8 +1,5 @@
 // Vercel Serverless Function - Subscribe to push notifications
-const { kv } = require('@vercel/kv');
-
-// VAPID Keys - Las mismas que en tu app
-const VAPID_PUBLIC_KEY = 'BBttaoWwmIuLMnBgJ72ce2iKQsuyBLkRlzZ4uSvpOvIXmCt53mtFWXdebjgGvaGqzvJVnq-EnjHGxOhvJKDv_nE';
+const { connectToDatabase } = require('../lib/mongodb');
 
 module.exports = async (req, res) => {
     // CORS headers
@@ -25,11 +22,10 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Invalid subscription' });
         }
 
-        // Crear ID único basado en el endpoint
-        const subId = Buffer.from(subscription.endpoint).toString('base64').substring(0, 50);
+        const { db } = await connectToDatabase();
+        const collection = db.collection('subscriptions');
 
         const subscriptionData = {
-            id: subId,
             endpoint: subscription.endpoint,
             keys: subscription.keys,
             userData: {
@@ -38,14 +34,16 @@ module.exports = async (req, res) => {
                 subscribedAt: userData?.subscribedAt || new Date().toISOString(),
                 userAgent: userData?.userAgent || '',
                 language: userData?.language || 'es'
-            }
+            },
+            createdAt: new Date()
         };
 
-        // Guardar en Vercel KV
-        await kv.set(`sub:${subId}`, JSON.stringify(subscriptionData));
-        
-        // Agregar a la lista de suscriptores
-        await kv.sadd('subscribers', subId);
+        // Upsert - actualizar si existe o crear si no
+        await collection.updateOne(
+            { endpoint: subscription.endpoint },
+            { $set: subscriptionData },
+            { upsert: true }
+        );
 
         console.log(`[Subscribe] New: ${userData?.userName || 'Unknown'}`);
 
@@ -55,7 +53,6 @@ module.exports = async (req, res) => {
         });
     } catch (error) {
         console.error('[Subscribe] Error:', error);
-        res.status(500).json({ error: 'Failed to save subscription' });
+        res.status(500).json({ error: 'Failed to save subscription: ' + error.message });
     }
 };
-

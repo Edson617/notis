@@ -1,6 +1,6 @@
 // Vercel Serverless Function - Send push notification to specific user
 const webPush = require('web-push');
-const { kv } = require('@vercel/kv');
+const { connectToDatabase } = require('../lib/mongodb');
 
 // VAPID Keys
 const VAPID_KEYS = {
@@ -34,15 +34,15 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Endpoint required' });
         }
 
-        // Buscar suscripción
-        const subId = Buffer.from(endpoint).toString('base64').substring(0, 50);
-        const subData = await kv.get(`sub:${subId}`);
+        const { db } = await connectToDatabase();
+        const collection = db.collection('subscriptions');
 
-        if (!subData) {
+        // Buscar suscripción por endpoint
+        const subscription = await collection.findOne({ endpoint });
+
+        if (!subscription) {
             return res.status(404).json({ error: 'Subscription not found' });
         }
-
-        const subscription = typeof subData === 'string' ? JSON.parse(subData) : subData;
 
         // Personalizar notificación
         const personalizedNotification = {
@@ -57,13 +57,6 @@ module.exports = async (req, res) => {
                 timestamp: Date.now()
             }
         };
-
-        // Agregar saludo personalizado
-        if (subscription.userData.userName && subscription.userData.userName !== 'Usuario') {
-            if (!personalizedNotification.body.includes(subscription.userData.userName)) {
-                personalizedNotification.body = `${personalizedNotification.body}`;
-            }
-        }
 
         // Enviar notificación
         const pushSubscription = {
@@ -84,13 +77,11 @@ module.exports = async (req, res) => {
 
         if (error.statusCode === 410) {
             // Suscripción expirada, eliminar
-            const subId = Buffer.from(req.body.endpoint).toString('base64').substring(0, 50);
-            await kv.del(`sub:${subId}`);
-            await kv.srem('subscribers', subId);
+            const { db } = await connectToDatabase();
+            await db.collection('subscriptions').deleteOne({ endpoint: req.body.endpoint });
             return res.status(410).json({ error: 'Subscription expired' });
         }
 
-        res.status(500).json({ error: 'Failed to send notification' });
+        res.status(500).json({ error: 'Failed to send notification: ' + error.message });
     }
 };
-

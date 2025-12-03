@@ -1,5 +1,5 @@
 // Vercel Serverless Function - Get all subscriptions (admin)
-const { kv } = require('@vercel/kv');
+const { connectToDatabase } = require('../lib/mongodb');
 
 module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,28 +15,18 @@ module.exports = async (req, res) => {
     }
 
     try {
-        // Obtener todos los IDs de suscriptores
-        const subscriberIds = await kv.smembers('subscribers');
-        
-        if (!subscriberIds || subscriberIds.length === 0) {
-            return res.json({ total: 0, subscriptions: [] });
-        }
+        const { db } = await connectToDatabase();
+        const collection = db.collection('subscriptions');
 
-        // Obtener datos de cada suscriptor
-        const subscriptions = [];
-        
-        for (const subId of subscriberIds) {
-            const subData = await kv.get(`sub:${subId}`);
-            if (subData) {
-                const subscription = typeof subData === 'string' ? JSON.parse(subData) : subData;
-                subscriptions.push({
-                    userName: subscription.userData.userName,
-                    preferences: subscription.userData.preferences,
-                    subscribedAt: subscription.userData.subscribedAt,
-                    endpoint: subscription.endpoint
-                });
-            }
-        }
+        // Obtener todas las suscripciones
+        const allSubscriptions = await collection.find({}).toArray();
+
+        const subscriptions = allSubscriptions.map(sub => ({
+            userName: sub.userData.userName,
+            preferences: sub.userData.preferences,
+            subscribedAt: sub.userData.subscribedAt,
+            endpoint: sub.endpoint
+        }));
 
         res.json({ 
             total: subscriptions.length,
@@ -44,7 +34,6 @@ module.exports = async (req, res) => {
         });
     } catch (error) {
         console.error('[Subscriptions] Error:', error);
-        res.status(500).json({ error: 'Failed to get subscriptions' });
+        res.status(500).json({ error: 'Failed to get subscriptions: ' + error.message });
     }
 };
-

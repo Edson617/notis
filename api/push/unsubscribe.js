@@ -1,5 +1,5 @@
 // Vercel Serverless Function - Unsubscribe from push notifications
-const { kv } = require('@vercel/kv');
+const { connectToDatabase } = require('../lib/mongodb');
 
 module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -21,18 +21,16 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Endpoint required' });
         }
 
-        const subId = Buffer.from(endpoint).toString('base64').substring(0, 50);
+        const { db } = await connectToDatabase();
+        const collection = db.collection('subscriptions');
 
-        // Eliminar de Vercel KV
-        await kv.del(`sub:${subId}`);
-        await kv.srem('subscribers', subId);
+        const result = await collection.deleteOne({ endpoint });
 
-        console.log(`[Unsubscribe] Removed: ${subId}`);
+        console.log(`[Unsubscribe] Removed: ${result.deletedCount > 0}`);
 
-        res.json({ success: true, deleted: true });
+        res.json({ success: true, deleted: result.deletedCount > 0 });
     } catch (error) {
         console.error('[Unsubscribe] Error:', error);
         res.status(500).json({ error: 'Failed to remove subscription' });
     }
 };
-
