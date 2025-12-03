@@ -1,6 +1,6 @@
 // Vercel Serverless Function - Get VAPID public key
 
-const VAPID_PUBLIC_KEY = 'BBttaoWwmIuLMnBgJ72ce2iKQsuyBLkRlzZ4uSvpOvIXmCt53mtFWXdebjgGvaGqzvJVnq-EnjHGxOhvJKDv_nE';
+const VAPID_PUBLIC_KEY = 'BAyWM8-sjVt1WVJDjswBJLwD3nS19nkWcup1i0V_k0huwfI6FSl1Lou164djqq-hg6YHXGC_H8bhLtCU22-fWww';
 
 module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');

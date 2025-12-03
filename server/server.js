@@ -17,8 +17,8 @@ const PORT = process.env.PORT || 3000;
 // Generate your own with: npx web-push generate-vapid-keys
 // ========================================
 const VAPID_KEYS = {
-    publicKey: 'BBttaoWwmIuLMnBgJ72ce2iKQsuyBLkRlzZ4uSvpOvIXmCt53mtFWXdebjgGvaGqzvJVnq-EnjHGxOhvJKDv_nE',
-    privateKey: 'uy4duvTPAaGw9qvd1Xkw8lY52MK2mbYnrkLU3kZXoQw'
+    publicKey: 'BAyWM8-sjVt1WVJDjswBJLwD3nS19nkWcup1i0V_k0huwfI6FSl1Lou164djqq-hg6YHXGC_H8bhLtCU22-fWww',
+    privateKey: 'CJuxcHuQmqcvdVCPJ7BqMuBu2M66MM3LLpmcAo6qUro'
 };
 
 // Configure web-push

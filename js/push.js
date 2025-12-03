@@ -5,7 +5,7 @@
 
 // VAPID Public Key - You need to generate your own keys for production
 // Generate with: npx web-push generate-vapid-keys
-const VAPID_PUBLIC_KEY = 'BBttaoWwmIuLMnBgJ72ce2iKQsuyBLkRlzZ4uSvpOvIXmCt53mtFWXdebjgGvaGqzvJVnq-EnjHGxOhvJKDv_nE';
+const VAPID_PUBLIC_KEY = 'BAyWM8-sjVt1WVJDjswBJLwD3nS19nkWcup1i0V_k0huwfI6FSl1Lou164djqq-hg6YHXGC_H8bhLtCU22-fWww';
 
 // Server endpoint for push subscriptions
 const PUSH_SERVER_URL = '/api/push';
