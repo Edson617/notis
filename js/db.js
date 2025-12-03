@@ -219,14 +219,16 @@ class IndexedDBManager {
     }
 
     // ========================================
-    // NOTES specific methods
+    // NOTES specific methods (con sincronización offline/online)
     // ========================================
     async addNote(text) {
-        return this.add(STORES.NOTES, {
+        const note = {
             text,
             timestamp: Date.now(),
+            oderId: `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             synced: false
-        });
+        };
+        return this.add(STORES.NOTES, note);
     }
 
     async getAllNotes() {
@@ -239,7 +241,8 @@ class IndexedDBManager {
     }
 
     async getUnsyncedNotes() {
-        return this.getAll(STORES.NOTES, 'synced', false);
+        const notes = await this.getAll(STORES.NOTES);
+        return notes.filter(note => !note.synced);
     }
 
     async markNoteSynced(id) {
@@ -248,6 +251,101 @@ class IndexedDBManager {
             note.synced = true;
             return this.update(STORES.NOTES, note);
         }
+    }
+    
+    async markNotesSyncedByOrderIds(orderIds) {
+        const notes = await this.getAllNotes();
+        for (const note of notes) {
+            if (orderIds.includes(note.oderId)) {
+                note.synced = true;
+                await this.update(STORES.NOTES, note);
+            }
+        }
+    }
+
+    // ========================================
+    // SYNC with MongoDB
+    // ========================================
+    async syncWithServer() {
+        const unsyncedNotes = await this.getUnsyncedNotes();
+        
+        if (unsyncedNotes.length === 0) {
+            console.log('[IndexedDB] No hay notas pendientes de sincronizar');
+            return { synced: 0 };
+        }
+        
+        console.log(`[IndexedDB] Sincronizando ${unsyncedNotes.length} notas...`);
+        
+        try {
+            const response = await fetch('/api/data/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    items: unsyncedNotes.map(note => ({
+                        oderId: note.oderId,
+                        text: note.text,
+                        timestamp: note.timestamp
+                    }))
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Sync failed');
+            }
+            
+            const result = await response.json();
+            
+            // Marcar como sincronizadas las notas que se sincronizaron
+            const syncedOrderIds = result.results
+                .filter(r => r.status === 'synced' || r.status === 'already_exists')
+                .map(r => r.oderId);
+            
+            await this.markNotesSyncedByOrderIds(syncedOrderIds);
+            
+            console.log(`[IndexedDB] Sincronizadas ${result.synced} notas`);
+            return result;
+        } catch (error) {
+            console.error('[IndexedDB] Error en sincronización:', error);
+            throw error;
+        }
+    }
+    
+    async saveNoteWithSync(text) {
+        // Siempre guardar primero en IndexedDB
+        const note = await this.addNote(text);
+        
+        // Intentar sincronizar si hay conexión
+        if (navigator.onLine) {
+            try {
+                console.log('[IndexedDB] Intentando sincronizar con servidor...');
+                
+                const response = await fetch('/api/data/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        oderId: note.oderId,
+                        text: note.text
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('[IndexedDB] Respuesta del servidor:', result);
+                
+                if (response.ok && result.success) {
+                    await this.markNoteSynced(note.id);
+                    note.synced = true;
+                    console.log('[IndexedDB] ✅ Nota guardada y sincronizada');
+                } else {
+                    console.error('[IndexedDB] ❌ Error del servidor:', result.error || result.message);
+                }
+            } catch (error) {
+                console.error('[IndexedDB] ❌ Error de conexión:', error.message);
+            }
+        } else {
+            console.log('[IndexedDB] 📴 Offline - guardado localmente para sincronizar después');
+        }
+        
+        return note;
     }
 
     // ========================================

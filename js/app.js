@@ -252,10 +252,15 @@ class NotiApp {
         }
 
         this.elements.dataList.innerHTML = notes.map(note => `
-            <div class="data-item" data-id="${note.id}">
+            <div class="data-item ${note.synced ? 'synced' : 'pending'}" data-id="${note.id}">
                 <div class="data-item-content">
                     <span class="data-item-text">${this.escapeHtml(note.text)}</span>
-                    <span class="data-item-time">${this.formatDate(note.timestamp)}</span>
+                    <span class="data-item-time">
+                        ${this.formatDate(note.timestamp)}
+                        <span class="sync-status ${note.synced ? 'synced' : 'pending'}" title="${note.synced ? 'Sincronizado con servidor' : 'Pendiente de sincronizar'}">
+                            ${note.synced ? '☁️' : '💾'}
+                        </span>
+                    </span>
                 </div>
                 <div class="data-item-actions">
                     <button class="delete-btn" onclick="app.handleDeleteNote(${note.id})" title="Eliminar">
@@ -404,7 +409,7 @@ class NotiApp {
         }
     }
 
-    // Handle add data
+    // Handle add data (guarda en IndexedDB y sincroniza con MongoDB si hay internet)
     async handleAddData() {
         const text = this.elements.newDataInput.value.trim();
         
@@ -414,10 +419,15 @@ class NotiApp {
         }
 
         try {
-            await DB.addNote(text);
+            const note = await DB.saveNoteWithSync(text);
             this.elements.newDataInput.value = '';
             await this.loadNotes();
-            this.showToast('Nota guardada', 'success');
+            
+            if (note.synced) {
+                this.showToast('✅ Nota guardada y sincronizada', 'success');
+            } else {
+                this.showToast('💾 Guardado offline - Se sincronizará cuando haya internet', 'info');
+            }
         } catch (error) {
             console.error('[App] Failed to add note:', error);
             this.showToast('Error al guardar nota', 'error');
@@ -507,15 +517,23 @@ class NotiApp {
         try {
             const unsyncedNotes = await DB.getUnsyncedNotes();
             
-            // Here you would sync with your server
-            console.log('[App] Notes to sync:', unsyncedNotes.length);
+            if (unsyncedNotes.length === 0) {
+                console.log('[App] No hay datos pendientes de sincronizar');
+                return;
+            }
             
-            // Mark as synced (in a real app, do this after server confirms)
-            for (const note of unsyncedNotes) {
-                await DB.markNoteSynced(note.id);
+            console.log('[App] Sincronizando', unsyncedNotes.length, 'notas con MongoDB...');
+            this.showToast(`🔄 Sincronizando ${unsyncedNotes.length} nota(s)...`, 'info');
+            
+            const result = await DB.syncWithServer();
+            
+            if (result.synced > 0) {
+                this.showToast(`✅ ${result.synced} nota(s) sincronizada(s) con el servidor`, 'success');
+                await this.loadNotes();
             }
         } catch (error) {
             console.error('[App] Sync failed:', error);
+            this.showToast('Error al sincronizar con el servidor', 'error');
         }
     }
 

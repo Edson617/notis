@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NotiApp - Datos en MongoDB</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-card: #16213e;
+            --accent-primary: #e94560;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --success: #00d4aa;
+            --warning: #ffc107;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #e94560 0%, #533483 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle { color: var(--text-secondary); margin-bottom: 2rem; }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 1rem;
+        }
+        .back-link:hover { color: var(--text-primary); }
+        .stats {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .stat {
+            background: var(--bg-card);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+        .stat-label { color: var(--text-secondary); font-size: 0.85rem; }
+        .section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .section h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+        .data-list { display: grid; gap: 0.75rem; }
+        .data-item {
+            background: rgba(0,0,0,0.2);
+            padding: 1rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            border-left: 3px solid var(--success);
+        }
+        .data-text { flex: 1; word-break: break-word; }
+        .data-meta {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+        .data-source {
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            background: rgba(0,212,170,0.2);
+            color: var(--success);
+        }
+        .data-source.offline { background: rgba(255,193,7,0.2); color: var(--warning); }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #e94560 0%, #533483 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .empty {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+        .loading { text-align: center; padding: 2rem; color: var(--text-secondary); }
+        .error { color: #ff4757; padding: 1rem; background: rgba(255,71,87,0.1); border-radius: 8px; }
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .tab {
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.05);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .tab.active {
+            background: var(--accent-primary);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Volver a la app</a>
+        
+        <h1>🗄️ Datos en MongoDB</h1>
+        <p class="subtitle">Visualiza los datos sincronizados en la base de datos</p>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number" id="total-mongo">-</div>
+                <div class="stat-label">En MongoDB</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number" id="total-local">-</div>
+                <div class="stat-label">En IndexedDB</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number" id="total-pending">-</div>
+                <div class="stat-label">Pendientes</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2>📊 Datos Guardados</h2>
+                <button class="btn" onclick="loadAllData()">🔄 Refrescar</button>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('mongo')">☁️ MongoDB</button>
+                <button class="tab" onclick="showTab('local')">💾 IndexedDB</button>
+            </div>
+
+            <div id="mongo-data" class="data-list">
+                <div class="loading">Cargando datos de MongoDB...</div>
+            </div>
+            
+            <div id="local-data" class="data-list" style="display: none;">
+                <div class="loading">Cargando datos locales...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/db.js"></script>
+    <script>
+        let currentTab = 'mongo';
+
+        function showTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab:nth-child(${tab === 'mongo' ? 1 : 2})`).classList.add('active');
+            
+            document.getElementById('mongo-data').style.display = tab === 'mongo' ? 'grid' : 'none';
+            document.getElementById('local-data').style.display = tab === 'local' ? 'grid' : 'none';
+        }
+
+        async function loadMongoData() {
+            const container = document.getElementById('mongo-data');
+            try {
+                const response = await fetch('/api/data/list');
+                const data = await response.json();
+                
+                document.getElementById('total-mongo').textContent = data.total || 0;
+                
+                if (!data.items || data.items.length === 0) {
+                    container.innerHTML = '<div class="empty">No hay datos en MongoDB</div>';
+                    return;
+                }
+                
+                container.innerHTML = data.items.map(item => `
+                    <div class="data-item">
+                        <div class="data-text">
+                            ${escapeHtml(item.text)}
+                            <div class="data-meta">
+                                📅 ${new Date(item.createdAt).toLocaleString('es-ES')}
+                                <span class="data-source ${item.source === 'offline_sync' ? 'offline' : ''}">
+                                    ${item.source === 'offline_sync' ? '📴 Sync Offline' : '🌐 Online'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                container.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+                document.getElementById('total-mongo').textContent = '❌';
+            }
+        }
+
+        async function loadLocalData() {
+            const container = document.getElementById('local-data');
+            try {
+                await DB.init();
+                const notes = await DB.getAllNotes();
+                const pending = notes.filter(n => !n.synced);
+                
+                document.getElementById('total-local').textContent = notes.length;
+                document.getElementById('total-pending').textContent = pending.length;
+                
+                if (notes.length === 0) {
+                    container.innerHTML = '<div class="empty">No hay datos en IndexedDB</div>';
+                    return;
+                }
+                
+                container.innerHTML = notes.map(note => `
+                    <div class="data-item" style="border-left-color: ${note.synced ? 'var(--success)' : 'var(--warning)'}">
+                        <div class="data-text">
+                            ${escapeHtml(note.text)}
+                            <div class="data-meta">
+                                📅 ${new Date(note.timestamp).toLocaleString('es-ES')}
+                                <span class="data-source ${note.synced ? '' : 'offline'}">
+                                    ${note.synced ? '☁️ Sincronizado' : '💾 Pendiente'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                container.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function loadAllData() {
+            await Promise.all([loadMongoData(), loadLocalData()]);
+        }
+
+        // Cargar al inicio
+        loadAllData();
+    </script>
+</body>
+</html>
+

@@ -300,6 +300,24 @@ body::before {
     height: 16px;
 }
 
+.btn-data {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-full);
+    font-size: 1.1rem;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+}
+
+.btn-data:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
 /* Main Content */
 .main-content {
     flex: 1;
@@ -637,6 +655,31 @@ body::before {
 .data-item-time {
     font-size: 0.75rem;
     color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+/* Sync Status Indicator */
+.sync-status {
+    font-size: 0.85rem;
+}
+
+.sync-status.synced {
+    color: var(--success);
+}
+
+.sync-status.pending {
+    color: var(--warning);
+    animation: pulse 2s ease infinite;
+}
+
+.data-item.pending {
+    border-left: 3px solid var(--warning);
+}
+
+.data-item.synced {
+    border-left: 3px solid var(--success);
 }
 
 .data-item-actions {
