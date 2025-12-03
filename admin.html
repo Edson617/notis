@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NotiApp - Panel de Administración</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --accent-primary: #e94560;
+            --accent-secondary: #0f3460;
+            --accent-green: #00d4aa;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --success: #00d4aa;
+            --warning: #ffc107;
+            --error: #ff4757;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #e94560 0%, #533483 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle { color: var(--text-secondary); margin-bottom: 2rem; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .stat-label { color: var(--text-secondary); font-size: 0.85rem; }
+
+        .section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .section h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-info {
+            background: rgba(0, 212, 170, 0.1);
+            border: 1px solid rgba(0, 212, 170, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: var(--success);
+        }
+
+        .user-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .user-card {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1.25rem;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .user-card:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .user-card.selected {
+            border-color: var(--success);
+            background: rgba(0, 212, 170, 0.1);
+        }
+
+        .user-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .user-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .user-prefs {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.75rem;
+        }
+
+        .pref-tag {
+            background: var(--accent-secondary);
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+        }
+
+        .user-meta {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .btn-send {
+            background: linear-gradient(135deg, #e94560 0%, #533483 100%);
+            color: white;
+        }
+
+        .btn-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.4);
+        }
+
+        .btn-select {
+            background: var(--accent-secondary);
+            color: white;
+        }
+
+        .btn-select:hover { background: #0f4470; }
+
+        .btn-select.selected {
+            background: var(--success);
+        }
+
+        /* Modal de envío */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 { font-size: 1.25rem; }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-target {
+            background: rgba(233, 69, 96, 0.1);
+            border: 1px solid var(--accent-primary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .modal-target strong {
+            color: var(--accent-primary);
+            font-size: 1.1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .btn-full {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--bg-card);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--success);
+            animation: slideIn 0.3s ease;
+            z-index: 1001;
+        }
+
+        .toast.error { border-left-color: var(--error); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 1rem;
+        }
+
+        .back-link:hover { color: var(--text-primary); }
+
+        .bulk-actions {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .bulk-actions.active { display: flex; }
+
+        .bulk-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .bulk-count {
+            background: var(--success);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Volver a la app</a>
+        
+        <h1>🔧 Panel de Administración</h1>
+        <p class="subtitle">Envía notificaciones personalizadas a usuarios específicos</p>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="total-users">0</div>
+                <div class="stat-label">Total Usuarios</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="ofertas-count">0</div>
+                <div class="stat-label">🛒 Ofertas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="noticias-count">0</div>
+                <div class="stat-label">📰 Noticias</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="alertas-count">0</div>
+                <div class="stat-label">🚨 Alertas</div>
+            </div>
+        </div>
+
+        <!-- User List -->
+        <div class="section">
+            <h2>👥 Usuarios - Haz clic para enviar notificación individual</h2>
+            
+            <div class="section-info">
+                💡 <strong>Cada notificación es privada.</strong> Si envías un mensaje a "Edson", solo Edson lo recibe. Galgo NO verá esa notificación.
+            </div>
+
+            <!-- Bulk actions -->
+            <div class="bulk-actions" id="bulk-actions">
+                <div class="bulk-info">
+                    <span class="bulk-count" id="selected-count">0</span>
+                    <span>usuarios seleccionados</span>
+                </div>
+                <div>
+                    <button class="btn btn-send" onclick="sendToSelected()">
+                        📤 Enviar a seleccionados
+                    </button>
+                    <button class="btn btn-select" onclick="clearSelection()" style="margin-left: 0.5rem;">
+                        ✕ Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <div class="user-grid" id="user-list">
+                <div class="empty-state">
+                    <p>Cargando usuarios...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para enviar notificación -->
+    <div class="modal" id="send-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📤 Enviar Notificación</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            
+            <div class="modal-target" id="modal-target">
+                Enviando a: <strong id="target-name">Usuario</strong>
+            </div>
+            
+            <form id="send-form">
+                <div class="form-group">
+                    <label>Título</label>
+                    <input type="text" id="notif-title" placeholder="Título de la notificación" required>
+                </div>
+                <div class="form-group">
+                    <label>Mensaje personalizado</label>
+                    <textarea id="notif-body" rows="3" placeholder="Escribe tu mensaje..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-send btn-full">
+                    🚀 Enviar Notificación
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Store all user data
+        let allUsers = [];
+        let selectedUsers = new Set();
+        let currentTarget = null; // 'single' user index or 'multiple'
+
+        // Load users
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/push/subscriptions');
+                const data = await response.json();
+                allUsers = data.subscriptions;
+                
+                // Update stats
+                document.getElementById('total-users').textContent = data.total;
+                
+                let ofertas = 0, noticias = 0, alertas = 0;
+                allUsers.forEach(sub => {
+                    if (sub.preferences.includes('ofertas')) ofertas++;
+                    if (sub.preferences.includes('noticias')) noticias++;
+                    if (sub.preferences.includes('alertas')) alertas++;
+                });
+                
+                document.getElementById('ofertas-count').textContent = ofertas;
+                document.getElementById('noticias-count').textContent = noticias;
+                document.getElementById('alertas-count').textContent = alertas;
+                
+                renderUsers();
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('user-list').innerHTML = `
+                    <div class="empty-state"><p>Error al cargar usuarios</p></div>
+                `;
+            }
+        }
+
+        // Render users
+        function renderUsers() {
+            const container = document.getElementById('user-list');
+            
+            if (allUsers.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>No hay usuarios suscritos</p>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">
+                            Los usuarios pueden suscribirse desde la <a href="/" style="color: var(--accent-primary);">página principal</a>
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = allUsers.map((user, index) => `
+                <div class="user-card ${selectedUsers.has(index) ? 'selected' : ''}" id="user-${index}">
+                    <div class="user-header">
+                        <div class="user-name">
+                            <div class="user-avatar">${user.userName.charAt(0).toUpperCase()}</div>
+                            ${user.userName}
+                        </div>
+                    </div>
+                    <div class="user-prefs">
+                        ${user.preferences.map(p => `<span class="pref-tag">${getPrefEmoji(p)} ${p}</span>`).join('')}
+                    </div>
+                    <div class="user-meta">
+                        📅 Suscrito: ${new Date(user.subscribedAt).toLocaleDateString('es-ES')}
+                    </div>
+                    <div class="user-actions">
+                        <button class="btn btn-send" onclick="openSendModal(${index})">
+                            📤 Enviar mensaje
+                        </button>
+                        <button class="btn btn-select ${selectedUsers.has(index) ? 'selected' : ''}" onclick="toggleSelect(${index})">
+                            ${selectedUsers.has(index) ? '✓' : '+'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getPrefEmoji(pref) {
+            const emojis = { ofertas: '🛒', noticias: '📰', recordatorios: '⏰', alertas: '🚨' };
+            return emojis[pref] || '📌';
+        }
+
+        // Toggle user selection
+        function toggleSelect(index) {
+            if (selectedUsers.has(index)) {
+                selectedUsers.delete(index);
+            } else {
+                selectedUsers.add(index);
+            }
+            updateBulkActions();
+            renderUsers();
+        }
+
+        function clearSelection() {
+            selectedUsers.clear();
+            updateBulkActions();
+            renderUsers();
+        }
+
+        function updateBulkActions() {
+            const bulkActions = document.getElementById('bulk-actions');
+            const count = document.getElementById('selected-count');
+            
+            if (selectedUsers.size > 0) {
+                bulkActions.classList.add('active');
+                count.textContent = selectedUsers.size;
+            } else {
+                bulkActions.classList.remove('active');
+            }
+        }
+
+        // Open modal for single user
+        function openSendModal(index) {
+            currentTarget = { type: 'single', index };
+            const user = allUsers[index];
+            
+            document.getElementById('target-name').textContent = `👤 ${user.userName} (solo este usuario)`;
+            document.getElementById('notif-title').value = `¡Hola ${user.userName}!`;
+            document.getElementById('notif-body').value = '';
+            
+            document.getElementById('send-modal').classList.add('active');
+        }
+
+        // Send to selected users
+        function sendToSelected() {
+            if (selectedUsers.size === 0) return;
+            
+            currentTarget = { type: 'multiple', indices: Array.from(selectedUsers) };
+            const names = currentTarget.indices.map(i => allUsers[i].userName).join(', ');
+            
+            document.getElementById('target-name').textContent = `👥 ${selectedUsers.size} usuarios: ${names}`;
+            document.getElementById('notif-title').value = '¡Mensaje para ustedes!';
+            document.getElementById('notif-body').value = '';
+            
+            document.getElementById('send-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('send-modal').classList.remove('active');
+            currentTarget = null;
+        }
+
+        // Send form
+        document.getElementById('send-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('notif-title').value;
+            const body = document.getElementById('notif-body').value;
+            
+            if (!currentTarget) return;
+
+            let targets = [];
+            if (currentTarget.type === 'single') {
+                targets = [currentTarget.index];
+            } else {
+                targets = currentTarget.indices;
+            }
+
+            let sent = 0;
+            let failed = 0;
+
+            for (const index of targets) {
+                const user = allUsers[index];
+                try {
+                    const response = await fetch('/api/push/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            endpoint: user.endpoint,
+                            notification: { 
+                                title, 
+                                body,
+                                tag: `personal-${user.userName}-${Date.now()}` // Tag único para que no se agrupe
+                            }
+                        })
+                    });
+
+                    if (response.ok) {
+                        sent++;
+                        console.log(`✅ Enviado a ${user.userName}`);
+                    } else {
+                        failed++;
+                        console.error(`❌ Error enviando a ${user.userName}`);
+                    }
+                } catch (error) {
+                    failed++;
+                    console.error(`❌ Error con ${user.userName}:`, error);
+                }
+            }
+
+            closeModal();
+            clearSelection();
+
+            if (sent > 0) {
+                showToast(`✅ Notificación enviada a ${sent} usuario(s)`);
+            }
+            if (failed > 0) {
+                showToast(`❌ Falló para ${failed} usuario(s)`, true);
+            }
+        });
+
+        // Toast
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${isError ? 'error' : ''}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        // Close modal on outside click
+        document.getElementById('send-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'send-modal') closeModal();
+        });
+
+        // Init
+        loadUsers();
+        setInterval(loadUsers, 30000);
+    </script>
+</body>
+</html>

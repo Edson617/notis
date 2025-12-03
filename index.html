@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="description" content="NotiApp - Tu aplicación de notificaciones personalizadas">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NotiApp">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
+    <link rel="apple-touch-icon" href="icons/icon-192.svg">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <title>NotiApp - Notificaciones Personalizadas</title>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="splash-screen">
+        <div class="splash-content">
+            <div class="splash-logo">
+                <div class="logo-ring"></div>
+                <div class="logo-ring delay-1"></div>
+                <div class="logo-ring delay-2"></div>
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C10.343 2 9 3.343 9 5V6.17C6.718 7.135 5 9.333 5 12V17L3 19V20H21V19L19 17V12C19 9.333 17.282 7.135 15 6.17V5C15 3.343 13.657 2 12 2Z" fill="currentColor"/>
+                    <path d="M12 24C13.657 24 15 22.657 15 21H9C9 22.657 10.343 24 12 24Z" fill="currentColor"/>
+                </svg>
+            </div>
+            <h1 class="splash-title">NotiApp</h1>
+            <p class="splash-subtitle">Cargando experiencia...</p>
+            <div class="splash-loader">
+                <div class="loader-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="app hidden">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-logo">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2C10.343 2 9 3.343 9 5V6.17C6.718 7.135 5 9.333 5 12V17L3 19V20H21V19L19 17V12C19 9.333 17.282 7.135 15 6.17V5C15 3.343 13.657 2 12 2Z" fill="currentColor"/>
+                        <path d="M12 24C13.657 24 15 22.657 15 21H9C9 22.657 10.343 24 12 24Z" fill="currentColor"/>
+                    </svg>
+                    <span>NotiApp</span>
+                </div>
+                <div class="connection-status" id="connection-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Online</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Subscription Card -->
+            <section class="card subscription-card">
+                <div class="card-header">
+                    <h2>🔔 Suscripción a Notificaciones</h2>
+                </div>
+                <div class="card-body">
+                    <div id="subscription-status" class="subscription-status">
+                        <div class="status-icon pending">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                                <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <p>Verificando estado de suscripción...</p>
+                    </div>
+                    
+                    <div class="subscription-form" id="subscription-form">
+                        <div class="form-group">
+                            <label for="user-name">Tu nombre</label>
+                            <input type="text" id="user-name" placeholder="Ej: María García" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="user-preferences">Preferencias de notificación</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="pref" value="ofertas" checked>
+                                    <span class="checkmark"></span>
+                                    Ofertas y promociones
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="pref" value="noticias" checked>
+                                    <span class="checkmark"></span>
+                                    Noticias y actualizaciones
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="pref" value="recordatorios">
+                                    <span class="checkmark"></span>
+                                    Recordatorios personales
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="pref" value="alertas">
+                                    <span class="checkmark"></span>
+                                    Alertas importantes
+                                </label>
+                            </div>
+                        </div>
+                        <button id="subscribe-btn" class="btn btn-primary">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2C10.343 2 9 3.343 9 5V6.17C6.718 7.135 5 9.333 5 12V17L3 19V20H21V19L19 17V12C19 9.333 17.282 7.135 15 6.17V5C15 3.343 13.657 2 12 2Z" fill="currentColor"/>
+                            </svg>
+                            Activar Notificaciones
+                        </button>
+                    </div>
+
+                    <div class="subscription-active hidden" id="subscription-active">
+                        <div class="status-icon success">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                                <path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <h3>¡Notificaciones Activas!</h3>
+                        <p id="subscriber-name">Hola, Usuario</p>
+                        <button id="unsubscribe-btn" class="btn btn-secondary">
+                            Desactivar Notificaciones
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Test Notification Card -->
+            <section class="card test-card">
+                <div class="card-header">
+                    <h2>📤 Enviar Notificación de Prueba</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="test-title">Título</label>
+                        <input type="text" id="test-title" placeholder="Título de la notificación" value="¡Hola desde NotiApp!">
+                    </div>
+                    <div class="form-group">
+                        <label for="test-body">Mensaje</label>
+                        <textarea id="test-body" placeholder="Contenido del mensaje" rows="3">Esta es una notificación de prueba personalizada para ti.</textarea>
+                    </div>
+                    <button id="test-notification-btn" class="btn btn-accent">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Enviar Notificación
+                    </button>
+                </div>
+            </section>
+
+            <!-- Saved Data Card -->
+            <section class="card data-card">
+                <div class="card-header">
+                    <h2>💾 Datos Guardados (Offline)</h2>
+                    <button id="refresh-data-btn" class="btn-icon" title="Refrescar datos">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M1 4V10H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M23 20V14H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14L18.36 18.36A9 9 0 013.51 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="data-list" id="data-list">
+                        <div class="data-empty">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M21 16V8C21 6.89543 20.1046 6 19 6H5C3.89543 6 3 6.89543 3 8V16C3 17.1046 3.89543 18 5 18H19C20.1046 18 21 17.1046 21 16Z" stroke="currentColor" stroke-width="2"/>
+                                <path d="M12 10V14M12 14L10 12M12 14L14 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <p>No hay datos guardados aún</p>
+                        </div>
+                    </div>
+                    
+                    <div class="add-data-form">
+                        <div class="form-row">
+                            <input type="text" id="new-data-input" placeholder="Añadir nueva nota...">
+                            <button id="add-data-btn" class="btn btn-primary">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Notification History -->
+            <section class="card history-card">
+                <div class="card-header">
+                    <h2>📋 Historial de Notificaciones</h2>
+                    <button id="clear-history-btn" class="btn-icon" title="Limpiar historial">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="notification-list" id="notification-list">
+                        <div class="data-empty">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2C10.343 2 9 3.343 9 5V6.17C6.718 7.135 5 9.333 5 12V17L3 19V20H21V19L19 17V12C19 9.333 17.282 7.135 15 6.17V5C15 3.343 13.657 2 12 2Z" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            <p>No hay notificaciones en el historial</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>NotiApp PWA &copy; 2024 - Funciona 100% Offline</p>
+        </footer>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/db.js"></script>
+    <script src="js/push.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
+
