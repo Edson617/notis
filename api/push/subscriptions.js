@@ -15,18 +15,25 @@ module.exports = async (req, res) => {
     }
 
     try {
+        console.log('[Subscriptions] Connecting to database...');
         const { db } = await connectToDatabase();
         const collection = db.collection('subscriptions');
 
+        console.log('[Subscriptions] Fetching subscriptions...');
         // Obtener todas las suscripciones
         const allSubscriptions = await collection.find({}).toArray();
+        
+        console.log('[Subscriptions] Found:', allSubscriptions.length);
 
-        const subscriptions = allSubscriptions.map(sub => ({
-            userName: sub.userData.userName,
-            preferences: sub.userData.preferences,
-            subscribedAt: sub.userData.subscribedAt,
-            endpoint: sub.endpoint
-        }));
+        // Mapear con validación para evitar errores
+        const subscriptions = allSubscriptions
+            .filter(sub => sub && sub.endpoint) // Filtrar documentos válidos
+            .map(sub => ({
+                userName: sub.userData?.userName || sub.userName || 'Usuario',
+                preferences: sub.userData?.preferences || sub.preferences || [],
+                subscribedAt: sub.userData?.subscribedAt || sub.subscribedAt || sub.createdAt || new Date().toISOString(),
+                endpoint: sub.endpoint
+            }));
 
         res.json({ 
             total: subscriptions.length,
@@ -34,6 +41,11 @@ module.exports = async (req, res) => {
         });
     } catch (error) {
         console.error('[Subscriptions] Error:', error);
-        res.status(500).json({ error: 'Failed to get subscriptions: ' + error.message });
+        res.status(500).json({ 
+            error: 'Failed to get subscriptions', 
+            message: error.message,
+            total: 0,
+            subscriptions: []
+        });
     }
 };

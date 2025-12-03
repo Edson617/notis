@@ -456,16 +456,18 @@
             try {
                 const response = await fetch('/api/push/subscriptions');
                 const data = await response.json();
-                allUsers = data.subscriptions;
+                
+                // Manejar caso donde subscriptions puede ser undefined
+                allUsers = data.subscriptions || [];
                 
                 // Update stats
-                document.getElementById('total-users').textContent = data.total;
+                document.getElementById('total-users').textContent = data.total || 0;
                 
                 let ofertas = 0, noticias = 0, alertas = 0;
                 allUsers.forEach(sub => {
-                    if (sub.preferences.includes('ofertas')) ofertas++;
-                    if (sub.preferences.includes('noticias')) noticias++;
-                    if (sub.preferences.includes('alertas')) alertas++;
+                    if (sub.preferences && sub.preferences.includes('ofertas')) ofertas++;
+                    if (sub.preferences && sub.preferences.includes('noticias')) noticias++;
+                    if (sub.preferences && sub.preferences.includes('alertas')) alertas++;
                 });
                 
                 document.getElementById('ofertas-count').textContent = ofertas;
@@ -473,10 +475,20 @@
                 document.getElementById('alertas-count').textContent = alertas;
                 
                 renderUsers();
+                
+                // Mostrar error de la API si hay
+                if (data.error) {
+                    console.warn('API Warning:', data.error, data.message);
+                }
             } catch (error) {
                 console.error('Error:', error);
+                allUsers = [];
+                document.getElementById('total-users').textContent = '0';
                 document.getElementById('user-list').innerHTML = `
-                    <div class="empty-state"><p>Error al cargar usuarios</p></div>
+                    <div class="empty-state">
+                        <p>Error al cargar usuarios</p>
+                        <p style="font-size: 0.8rem; color: #ff4757;">${error.message}</p>
+                    </div>
                 `;
             }
         }

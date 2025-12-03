@@ -18,7 +18,7 @@ async function connectToDatabase() {
     const client = new MongoClient(MONGODB_URI);
     await client.connect();
     
-    const db = client.db('notiapp');
+    const db = client.db('noti');
     
     cachedClient = client;
     cachedDb = db;
