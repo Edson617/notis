@@ -71,14 +71,25 @@ class PushManager {
 
     // Subscribe to push notifications
     async subscribe(userData = {}) {
-        if (!this.isSupported || !this.swRegistration) {
-            throw new Error('Push notifications not supported or service worker not registered');
+        if (!this.isSupported) {
+            throw new Error('Push notifications not supported in this browser');
+        }
+        
+        // Esperar a que el service worker esté listo
+        if (!this.swRegistration) {
+            console.log('[Push] Waiting for service worker...');
+            try {
+                this.swRegistration = await navigator.serviceWorker.ready;
+                console.log('[Push] Service worker ready');
+            } catch (err) {
+                throw new Error('Service Worker not ready: ' + err.message);
+            }
         }
 
         // Check permission
         const permission = await this.requestPermission();
         if (permission !== 'granted') {
-            throw new Error('Notification permission denied');
+            throw new Error('Debes permitir las notificaciones para continuar');
         }
 
         try {

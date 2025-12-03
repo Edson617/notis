@@ -120,12 +120,33 @@ class NotiApp {
     async registerServiceWorker() {
         if (!('serviceWorker' in navigator)) {
             console.warn('[App] Service Worker not supported');
+            this.showToast('Tu navegador no soporta Service Workers', 'warning');
             return;
         }
 
         try {
-            this.swRegistration = await navigator.serviceWorker.register('/service-worker.js');
+            // Esperar a que el SW esté listo
+            this.swRegistration = await navigator.serviceWorker.register('/service-worker.js', {
+                scope: '/'
+            });
+            
             console.log('[App] Service Worker registered:', this.swRegistration.scope);
+            
+            // Esperar a que el SW esté activo
+            if (this.swRegistration.installing) {
+                console.log('[App] Service Worker installing...');
+                await new Promise((resolve) => {
+                    this.swRegistration.installing.addEventListener('statechange', (e) => {
+                        if (e.target.state === 'activated') {
+                            resolve();
+                        }
+                    });
+                });
+            } else if (this.swRegistration.waiting) {
+                console.log('[App] Service Worker waiting...');
+            } else if (this.swRegistration.active) {
+                console.log('[App] Service Worker active');
+            }
 
             // Handle updates
             this.swRegistration.addEventListener('updatefound', () => {
