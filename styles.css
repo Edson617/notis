@@ -270,6 +270,36 @@ body::before {
     color: var(--error);
 }
 
+/* Header Actions */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.btn-admin {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-md);
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-tertiary) 100%);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    color: white;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+}
+
+.btn-admin:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.btn-admin svg {
+    width: 16px;
+    height: 16px;
+}
+
 /* Main Content */
 .main-content {
     flex: 1;
