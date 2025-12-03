@@ -75,15 +75,32 @@ class PushManager {
             throw new Error('Push notifications not supported in this browser');
         }
         
-        // Esperar a que el service worker esté listo
-        if (!this.swRegistration) {
-            console.log('[Push] Waiting for service worker...');
-            try {
-                this.swRegistration = await navigator.serviceWorker.ready;
-                console.log('[Push] Service worker ready');
-            } catch (err) {
-                throw new Error('Service Worker not ready: ' + err.message);
+        // Esperar a que el service worker esté completamente listo y activo
+        console.log('[Push] Waiting for service worker to be ready...');
+        try {
+            this.swRegistration = await navigator.serviceWorker.ready;
+            console.log('[Push] Service worker ready, state:', this.swRegistration.active?.state);
+            
+            // Asegurar que el SW esté activo
+            if (!this.swRegistration.active) {
+                console.log('[Push] Waiting for SW to activate...');
+                await new Promise((resolve, reject) => {
+                    const sw = this.swRegistration.installing || this.swRegistration.waiting;
+                    if (!sw) {
+                        reject(new Error('No service worker found'));
+                        return;
+                    }
+                    sw.addEventListener('statechange', (e) => {
+                        if (e.target.state === 'activated') {
+                            resolve();
+                        }
+                    });
+                    // Timeout después de 10 segundos
+                    setTimeout(() => reject(new Error('SW activation timeout')), 10000);
+                });
             }
+        } catch (err) {
+            throw new Error('Service Worker not ready: ' + err.message);
         }
 
         // Check permission
@@ -95,6 +112,8 @@ class PushManager {
         try {
             // Convert VAPID key
             const applicationServerKey = this.urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+            
+            console.log('[Push] Attempting to subscribe...');
 
             // Subscribe
             this.subscription = await this.swRegistration.pushManager.subscribe({

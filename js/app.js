@@ -125,42 +125,71 @@ class NotiApp {
         }
 
         try {
-            // Esperar a que el SW esté listo
+            // Registrar el SW
+            console.log('[App] Registering Service Worker...');
             this.swRegistration = await navigator.serviceWorker.register('/service-worker.js', {
                 scope: '/'
             });
             
-            console.log('[App] Service Worker registered:', this.swRegistration.scope);
+            console.log('[App] Service Worker registered, scope:', this.swRegistration.scope);
             
-            // Esperar a que el SW esté activo
-            if (this.swRegistration.installing) {
-                console.log('[App] Service Worker installing...');
-                await new Promise((resolve) => {
-                    this.swRegistration.installing.addEventListener('statechange', (e) => {
-                        if (e.target.state === 'activated') {
-                            resolve();
-                        }
-                    });
-                });
-            } else if (this.swRegistration.waiting) {
-                console.log('[App] Service Worker waiting...');
-            } else if (this.swRegistration.active) {
-                console.log('[App] Service Worker active');
-            }
+            // Esperar a que el SW esté completamente activo
+            await this.waitForServiceWorkerActive();
+            
+            console.log('[App] Service Worker is now active!');
 
             // Handle updates
             this.swRegistration.addEventListener('updatefound', () => {
                 const newWorker = this.swRegistration.installing;
-                newWorker.addEventListener('statechange', () => {
-                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        this.showToast('Nueva versión disponible. Recarga para actualizar.', 'info');
-                    }
-                });
+                if (newWorker) {
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            this.showToast('Nueva versión disponible. Recarga para actualizar.', 'info');
+                        }
+                    });
+                }
             });
 
         } catch (error) {
             console.error('[App] Service Worker registration failed:', error);
+            this.showToast('Error al registrar Service Worker', 'error');
         }
+    }
+    
+    // Helper para esperar a que el SW esté activo
+    async waitForServiceWorkerActive() {
+        // Si ya está activo, retornar
+        if (this.swRegistration.active) {
+            console.log('[App] SW already active');
+            return;
+        }
+        
+        // Obtener el SW que está instalando o esperando
+        const sw = this.swRegistration.installing || this.swRegistration.waiting;
+        
+        if (!sw) {
+            // Esperar a que esté listo usando navigator.serviceWorker.ready
+            console.log('[App] Waiting for SW ready...');
+            await navigator.serviceWorker.ready;
+            return;
+        }
+        
+        console.log('[App] SW state:', sw.state);
+        
+        // Si está activado, retornar
+        if (sw.state === 'activated') {
+            return;
+        }
+        
+        // Esperar el cambio de estado a activated
+        return new Promise((resolve) => {
+            sw.addEventListener('statechange', (e) => {
+                console.log('[App] SW state changed to:', e.target.state);
+                if (e.target.state === 'activated') {
+                    resolve();
+                }
+            });
+        });
     }
 
     // Initialize push manager
